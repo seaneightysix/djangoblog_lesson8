@@ -1,17 +1,27 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from myblog.models import Genre, Post
 from django.template import loader
 from django.http import HttpResponse, HttpResponseRedirect, Http404
+from myblog.forms import MyPostForm
+from django import forms
+from django.utils import timezone
 
-def stub_view(request, *args, **kwargs):
-    body = "Stub View\n\n"
-    if args:
-        body += "Args:\n"
-        body += "\n".join(["\t%s" % a for a in args])
-    if kwargs:
-        body += "Kwargs:\n"
-        body += "\n".join(["\t%s: %s" % i for i in kwargs.items()])
-    return HttpResponse(body, content_type="text/plain")
+def add_post(request):
+ 
+    if request.method == "POST":
+        form = MyPostForm(request.POST)
+        if form.is_valid():
+            model_instance = form.save(commit=False)
+            model_instance.created_date = timezone.now()
+            model_instance.modified_date = model_instance.created_date
+            model_instance.published_date = model_instance.created_date
+            model_instance.save()
+            return redirect('/')
+ 
+    else:
+        form = MyPostForm()
+        return render(request, "post_form.html", {'form': form})
+
 
 def list_view(request):
     published = Post.objects.exclude(published_date__exact=None)
